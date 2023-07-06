@@ -1,0 +1,111 @@
+package ${package.Dao};
+
+import ${package.Entity}.${entity};
+import ${package.Mapper}.${table.mapperName};
+import com.wm.sequence.client.Sequence;
+import com.wm.sequence.support.exception.SequenceException;
+import com.wm.utils.log.LoggerNameEnum;
+import com.wm.utils.log.LoggerUtil;
+import org.springframework.stereotype.Repository;
+
+import javax.annotation.Resource;
+import java.util.Date;
+
+/**
+ * <p>
+ * ${table.comment!} dao类
+ * </p>
+ *
+ * @author ${author}
+ * @since ${date}
+ */
+@Repository
+<% if(kotlin){ %>
+open class ${table.daoName} {
+
+}
+<% }else{ %>
+public class ${table.daoName} {
+
+    <%
+       var mapperInstanceName = @cn.hutool.core.util.StrUtil.lowerFirst(table.mapperName);
+       var entityName = @cn.hutool.core.util.StrUtil.lowerFirst(entity);
+       var entityNameSeq = @cn.hutool.core.util.StrUtil.replace(entityName,"DO","Seq");
+       var entityNameSequence = @cn.hutool.core.util.StrUtil.replace(table.name,"t_","");
+    %>
+
+    @Resource
+    private ${table.mapperName} ${mapperInstanceName};
+
+
+    @Resource
+    private Sequence ${entityNameSeq};
+
+
+    /**
+     * ${table.comment!}
+     *
+     * @return
+     */
+    @Bean("${entityNameSeq}")
+    public Sequence ${entityNameSeq}uence() {
+        GroupSequence groupSequence = new GroupSequence();
+        groupSequence.setAdjust(true);
+        groupSequence.setName("${entityNameSequence}_seq");
+        return groupSequence;
+    }
+
+     /**
+      * 新增${entity}
+      *
+      * @param ${entityName}
+      * @return
+      */
+     public long save(${entity} ${entityName}) {
+         try {
+             ${entityName}.setCreateDate(new Date());
+             ${entityName}.setUpdateDate(new Date());
+             ${entityName}.setId(${entityNameSeq}.nextValue());
+         } catch (SequenceException e) {
+             LoggerUtil.logger(LoggerNameEnum.WM_ERROR).error(this.getClass().getName(), "save", e);
+             return 0;
+         }
+         if (${mapperInstanceName}.insert(${entityName}) != 1) {
+             return 0;
+         }
+         return ${entityName}.getId();
+     }
+
+     /**
+      * 根据id更新${entity}
+      *
+      * @param ${entityName}
+      * @return
+      */
+     public int updateById(${entity} ${entityName}) {
+         return ${mapperInstanceName}.updateById(${entityName});
+     }
+
+     /**
+      * 删除
+      *
+      * @param id
+      * @return
+      */
+     public int deleteById(Long id) {
+         return ${mapperInstanceName}.deleteById(id);
+     }
+
+     /**
+      * 根据id查询
+      *
+      * @param id
+      * @return
+      */
+     public ${entity} findById(Long id) {
+         return ${mapperInstanceName}.selectById(id);
+     }
+
+
+}
+<% } %>
